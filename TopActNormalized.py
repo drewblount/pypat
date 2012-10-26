@@ -22,11 +22,6 @@ print 'IPC baseline category:', maxCat
 maxIpcAvg = max(maxPQCat.avgRawCitesMade)
 for pqCat in catInfo.A00.itervalues():
 	pqCat.inflCurve = [maxIpcAvg/ipcqAvg if ipcqAvg>0 else 0 for ipcqAvg in pqCat.avgRawCitesMade]
-	#pqCat.inflCurve = [0] * nQuarters
-	#for i in range(nQuarters):
-	#	if pqCat.avgRawCitesMade[i] <= 0.0:
-	#		continue
-	#	pqCat.inflCurve[i] = maxIpcAvg/pqCat.avgRawCitesMade[i]
 
 def tanIPCModernHits(citingPatn):
 	#if citingPatn in badIpcs: return 0
@@ -46,38 +41,24 @@ def tanPoolSize(citingPatn):
 def ipcSplit(ipc):
 	if ipc[7] == '/':
 		return [ipc[0], ipc[1:3], ipc[3], ipc[4:7], ipc[8:]]
-		#return [ipc[0], int(ipc[1:3]), ipc[3], int(ipc[4:7]), int(ipc[8:])]
 	else:
 		return [ipc[0], ipc[1:3], ipc[3], ipc[4:7], ipc[7:]]
-		#return [ipc[0], int(ipc[1:3]), ipc[3], int(ipc[4:7]), int(ipc[7:])]
 
 def tanIPCDistance(citingPatn, patn):
 	# five matches is max possible
-	#if citingPatn in badIpcs or patn in badIpcs:
-	#	return 0
 	
 	matches = 6 # one more than hierarchy so even patents w/same class count a little
-	#try:
 	l = zip(ipcSplit(citingPatn.ipc), ipcSplit(patn.ipc))
-	#except:
-	#	return 0
 	for p,cp in l:
 		if p == cp: matches -= 1
 		else: break
 	return matches
 
-
 def tanExpIPCDistance(citingPatn, patn):
 	# five matches is max possible
-	#if citingPatn in badIpcs or patn in badIpcs:
-	#	return 0
 	
 	weight = 2**5
-	#try:
 	l = zip(ipcSplit(citingPatn.ipc), ipcSplit(patn.ipc))
-	#except:
-	#	noIpcSplit += 1
-	#	return 0
 	for p,cp in l:
 		if p == cp: weight /= 2
 		else: break
@@ -117,13 +98,8 @@ def Activity(patn, f):
 		act[patns[citingPatnNo].isq] += f(patns[citingPatnNo], patn)
 	
 	return Patent.Cumulate(act)
-	#ch = [0] * nQuarters
-	#accum = 0
-	#for qi in range(len(act)):
-	#	accum += act[qi]
-	#	ch[qi] = accum
-	#return ch
 
+# This is where you choose which data to generate
 Nfuncs = [tanIPCModernHits, tanModernAndIncest, tanModernAndExpIPC]# tanModernHits, tanExpIPCDistance, tanIncest, tanPoolSize, tanIPCDistance]
 Rfuncs = dict()
 for func in Nfuncs:
@@ -139,12 +115,7 @@ for func in Nfuncs:
 	act = Activity(pcrTopPatn, Rfuncs[func])
 	actThreshes[func] = 0.1 * TotalHits(pcrTopPatn, Rfuncs[func])
 	print func.__name__, actThreshes[func]
-	#actThreshes[func] = 0.8 * act[-1]
-	#scaling[func] = 100.0/act[-1]
 
-
-#topPatns = sorted(patns.values(), key=lambda p: p.Activity(patns)[-1], reverse=True)[0:1000000]
-#topPatns.sort(key=lambda x: x.pno)	# sort by pno as proxy for date
 results = dict()
 for func in Nfuncs:
 	print func.__name__
@@ -182,7 +153,6 @@ for pno in []:
 	if act[-1] > 125: resultsAll.append([str(patn.pno)+' '+patn.title] + act) # save pno too
 
 #CHs2File(resultsAll, "tanall.data")			
-
 
 logging.info("done with TopAct after %.2f minutes.", ((time.time()-tStart)/60))
 logging.info("Finished at %s", time.strftime("%H:%M"))

@@ -79,7 +79,7 @@ class DATParser:
 			try:
 				pno = int(match.group(1))
 			except ValueError:
-				# BUGBUG this should probably include all citations
+				# TODO this should probably include all citations
 				pass # bad reference, ignore
 			else:
 				self.patn.rawcites.append(pno)
@@ -100,13 +100,10 @@ class DATParser:
 				self.patn.apd = datetime.datetime.strptime(match.group(1), "%Y%m%d").date()
 			except ValueError:
 				# this happens frequently, often subtly wrong: 1980-06-31 &c
-				# so we'll chop the end off
+				# so we'll chop the end off to preserve some date
 				self.patn.apd = datetime.datetime.strptime(match.group(1)[0:6], "%Y%m").date()
-				#logging.warning("Bad apd date: '%s' in %d in %s", match.group(1), self.patn.pno, self.fn)
-				#self.badPatns[self.patn.pno] = self.patn
+				logging.warning("Bad apd date: '%s' in %d in %s", match.group(1), self.patn.pno, self.fn)
 			self.patn.apq = Patent.d2q(self.patn.apd)
-			#else:
-			#	self.patn.apq = Patent.d2q(self.patn.apd)
 		
 		line = fPatn.next()
 		
@@ -184,7 +181,7 @@ class DATParser:
 		if match:
 			self.patn.ipc = str(match.group(1).rstrip())
 			self.state = 'UREF/PATN'
-		# BUGBUG doesn't get all IPCs
+		# TODO doesn't get all IPCs
 		# below version does, but eats next line
 		# if next line's UREF, you lose a UREF
 		#while match:

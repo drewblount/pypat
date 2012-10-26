@@ -56,7 +56,7 @@ class XMLParser:
 		try:
 			# for classification-ipcr which breaks out each part of the IPC
 			# section-class-subclass group/subgroup
-			# BUGBUG this is not the same format for these as in the DAT files
+			# NB: this is not the same format for these as in the DAT files
 			ipc = "%s%s%s %s/%s" % tuple([x.childNodes[0].data for x in ipc.childNodes[5:14] if x.nodeType == 1])
 		except IndexError:
 			# sometimes the main-group is just <main-group/> instead of a real value
@@ -65,9 +65,6 @@ class XMLParser:
 			ipc1 = "%s%s%s" % tuple([x.childNodes[0].data for x in ipc.childNodes[5:10] if x.nodeType == 1])
 			ipc2 = " 01/%s" % (ipc.childNodes[13],)
 			ipc = ipc1 + ipc2
-			# happens because some patents suck, record and skip
-			#logging.warning('Bad ipc for %d in %s', self.patn.pno, self.fn)
-			#self.badPatns[self.patn.pno] = self.patn
 		except TypeError:
 			# for classification-ipc which just gives a single string for each IPC
 			ipc = ipc.getElementsByTagName('main-classification')[0].childNodes[0].data

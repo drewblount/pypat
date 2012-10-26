@@ -48,9 +48,8 @@ class Patent(object):
 		# many patns will lack due to errors:
 		# apd, apq, ipc
 		
-		# many patns will explicitly *not* have:
+		# many patns will explicitly *not* have by design:
 		# assignee
-		# by design
 		
 	def __repr__(self):
 		return "<Patent %d>" % self.pno

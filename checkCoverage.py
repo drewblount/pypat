@@ -1,4 +1,5 @@
 def checkCoverage(patns):
+	'''Check that the first patent from each file is included in patns'''
 	checkXMLs = {\
 	'ipgb20050104' : 6836899,\
 	'ipgb20050111' : 6839904,\

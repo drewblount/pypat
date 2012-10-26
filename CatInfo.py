@@ -11,7 +11,7 @@ class CatInfo(object):
 		self.Stats(self.A00, 3, patns, nQuarters)
 		logging.info('Number of A00 cats: %d', len(self.A00))
 		print 'Number of A00 cats: %d' % len(self.A00)
-		# BUGBUG do average act lines for each cat
+		# TODO average act lines for each cat
 	
 	def Stats(self, d, depth, patns, nQuarters):
 		for patn in patns.itervalues():
@@ -19,7 +19,7 @@ class CatInfo(object):
 				print '\r', patn.pno,
 			if not hasattr(patn, 'ipc'):
 				continue
-			# BUGBUG this should count 'A01' and 'A 1' as the same cat
+			# TODO this should count 'A01' and 'A 1' as the same cat
 			cat = patn.ipc[0:depth].upper()
 			isq = patn.isq
 			if not d.has_key(cat):	# new category
@@ -40,12 +40,11 @@ class CatInfo(object):
 				badCats.append(cat)
 		for cat in badCats:
 			del(d[cat])
-				# BUGBUG maybe a bit arbitrary, but spot checks have supported it
-# BUGBUG need to deal with these or they'll error later
+				# TODO maybe a bit arbitrary, but spot checks have supported it
+		# TODO need to deal with these or they'll error later
 		r = range(nQuarters)
 		for dc in d.itervalues():
 			n = dc.nPatns
 			dc.avgRawCitesMade = [(1.0 * dc.nRawCitesMade[isq] / n[isq]) if dc.nRawCitesMade[isq] > 0 else 0 for isq in r]
 			dc.avgCitesMade = [(1.0 * dc.nCitesMade[isq] / n[isq]) if dc.nCitesMade[isq] > 0 else 0 for isq in r]
 			dc.avgCitesRecd = [(1.0 * dc.nCitesRecd[isq] / n[isq]) if dc.nCitesRecd[isq] > 0 else 0 for isq in r]
-		

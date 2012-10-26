@@ -53,11 +53,6 @@ class PerQuarter:
 			self.nCitesRecd[isq] += len(patn.citedby)
 			
 			# activity stuff
-			#pAct = patn.Activity(patns)
-			#pActApd = patn.ActivityApd(patns)
-			#for i in range(nQuarters):
-			#	self.totAct[isq][i] += pAct[i]
-			#	self.totActApd[isq][i] += pActApd[i]
 			self.totAct[isq] = [a+b for a,b in zip(self.totAct[isq],patn.Activity(patns))]
 			self.totActApd[isq] = [a+b for a,b in zip(self.totActApd[isq],patn.ActivityApd(patns))]
 		print

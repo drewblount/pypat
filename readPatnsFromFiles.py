@@ -1,7 +1,6 @@
 #check the data for every patent that shows up in the log
 #	maybe the patent after them too
 #	or buffer the patn search
-#BUGBUG look into pickling again (highest protocol slowest? cause it's slow as **fuck**)
 #fewer lines in poolsize
 #nPatnsEachIPC-A needs labels -- cumhits!
 #make a bunch of the perQuarter graphs peryear
@@ -63,6 +62,7 @@ def loadPatnFiles(patns, fl):
 	map(fileQ.put, fl)
 	
 	def work(fQ, dQ, eQ):
+		# TODO: should these be made fresh each time?
 		xmlp = XMLParser.XMLParser()
 		datp = DATParser.DATParser()
 		
@@ -78,13 +78,12 @@ def loadPatnFiles(patns, fl):
 				logging.info("%d (%d bad) found in %s", len(dpatns), len(badpatns), os.path.basename(fp))
 				dQ.put(dpatns)
 				parser.patns = dict()	# toss old patns
-				# BUGBUG tossing bad patns instead of dealing with them
+				# Could deal with bad patns instead of tossing them, but probably not worth it.
 				parser.badpatns = dict()
 			except:
 				logging.error("Error parsing %s", os.path.basename(fp), exc_info=True)
 				eQ.put(fp)
 			fQ.task_done()
-		#dictQ.close()
 		logging.info("Worker finished.")
 		
 	for i in range(0, multiprocessing.cpu_count()):
@@ -107,15 +106,12 @@ def loadPatnFiles(patns, fl):
 		p.join()
 	fileQ.join()	# should be instant as workers are already done
 	dictQ.join()
-	#if not dictQ.empty():	logging.error("dictQ not empty before close!")
-	#dictQ.close()
-	#dictQ.join_thread()
 	logging.info("done reading files after %.2f minutes.", (time.time()-tStart)/60)
 
 def sanityCheck(patns):
-	# misc cleanup
+	'''Micellaneous cleanup run after the patents are all loaded.'''
 	def handFix(patns):
-		# bad, but fixable, apds
+		'''Fix bad, but fixable App dates'''
 		patns[3943504].apd = datetime.date(1975, 2, 25) # not 2975
 		patns[3964954].apd = datetime.date(1973, 5, 31) # not 9173
 		patns[3969699].apd = datetime.date(1975, 4, 11) # not 9175
@@ -133,6 +129,7 @@ def sanityCheck(patns):
 		patns[4725260].apd = datetime.date(1987, 3, 24) # not 2987
 		patns[4732727].apd = datetime.date(1986, 4, 3) # not 9186
 		patns[4739365].apd = datetime.date(1987, 5, 28) # not 2987
+		# Having fixed date, fix quarter
 		for pno in [3943504, 3964954, 3969699, 4010353, 4020425, 4032532, 4041523, 4135654, 4198308,\
 			4255928, 4474874, 4542062, 4596904, 4709214, 4725260, 4732727, 4739365]:
 			patns[pno].apq = Patent.d2q(patns[pno].apd)
@@ -148,12 +145,9 @@ def sanityCheck(patns):
 	execfile('checkCoverage.py')	# import checkCoverage
 	missing = checkCoverage(patns)
 	handFix(patns)
-	#for patn in patns.itervalues():
-	#	if 
-	# ipcs
-	# <main-group/> : 89 from 2005 - 20101228
 	
 def populateCites(patns):
+	'''Populate the patents' "citedby" lists'''
 	logging.info("Started reverse at %s", time.strftime("%X %x"))
 	tStart = time.time()
 	for citingPatn in patns.itervalues():
@@ -177,8 +171,8 @@ def populateCites(patns):
 
 
 logging.info("-------------------------------------")
-logging.info("$Id: readPatnsFromFiles.py 293 2011-04-04 20:45:34Z andy $")
 
+#Alternate, smaller patent file lists for testing
 #xmlfilelist = [frXML + 'ipgb20081104.xml', frXML + 'ipgb20091215.xml']
 #datfilelist = [datfilelist[-1]]
 #xmlfilelist = ['test.xml']

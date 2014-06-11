@@ -1,3 +1,8 @@
+
+# Originially written by Andy Buchanan to produce a dictionary of Patent objects,
+# I've modified this so that it produces an array of dictionaries (which can
+# easily be loaded into MongoDB or saved as .json)
+
 import datetime, os, xml.dom.minidom, logging
 import Patent
 
@@ -5,9 +10,10 @@ fr = '/Users/Shared/patent_raw_data/ipgb-2005-present/'
 
 class XMLParser:
 	def __init__(self):
-		self.patns = dict()
-		self.badPatns = dict()
-	
+                # self.patns will be an array of dicts
+		self.patns = []
+		# self.badPatns = []
+		# self.badPatns isn't used anywhere in the code (it's always left empty)
 	def parseFile(self, fp):
 		self.fn = os.path.basename(fp)
 		buf = ''
@@ -25,10 +31,15 @@ class XMLParser:
 		for sPatn in bufs:
 			self.dom = xml.dom.minidom.parseString(sPatn)	# save dom for debugging convenience
 			self.patn = self.parseXMLDom(self.dom)
+			
+			''' I comment this out because badpatns is apparently never used
 			if self.patn != None and self.patn.pno not in self.badPatns:
 				self.patns[self.patn.pno] = self.patn
-		return (self.patns,self.badPatns)
+			'''
+			self.patns.append(self.patn)
+		return (self.patns)
 	
+                # previously returned a patent, should now return a patent dict
 	def parseXMLDom(self, dom):
 		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
 		try:
@@ -37,20 +48,29 @@ class XMLParser:
 			# presume that pno found is not a utility patent and ignore
 			return
 
-		self.patn = Patent.Patent(pno)
+
+                        
+		# self.patn = Patent.Patent(pno)
+		self.patn = {
+            'rawcites' : [],
+            'cites' : [],
+            'citedby': []
+        }
 		isd = elmPubRef.getElementsByTagName('date')[0].childNodes[0].data
-		self.patn.isd = datetime.datetime.strptime(isd, "%Y%m%d").date()
-		self.patn.isq = Patent.d2q(self.patn.isd)
+		# self.patn.isd = datetime.datetime.strptime(isd, "%Y%m%d").date()
+		self.patn['isd'] = datetime.datetime.strptime(isd, "%Y%m%d").date()
+		self.patn['isq'] = Patent.d2q(self.patn.isd)
 
 		elmAppRef = dom.getElementsByTagName('application-reference')[0].getElementsByTagName('document-id')[0]
 		apd = elmAppRef.getElementsByTagName('date')[0].childNodes[0].data
-		self.patn.apd = datetime.datetime.strptime(apd, "%Y%m%d").date()
-		self.patn.apq = Patent.d2q(self.patn.apd)	# NB: may be out of nQuarters range
+		# self.patn.apd = datetime.datetime.strptime(apd, "%Y%m%d").date()
+		self.patn['apd'] = datetime.datetime.strptime(apd, "%Y%m%d").date()
+		self.patn['apq'] = Patent.d2q(self.patn.apd)	# NB: may be out of nQuarters range
 		
 		uspc = dom.getElementsByTagName('classification-national')[0]
 		uspc = uspc.getElementsByTagName('main-classification')[0].childNodes[0].data
-		self.patn.uspc = str(uspc.encode('ascii','replace'))
-		
+		# self.patn.uspc = str(uspc.encode('ascii','replace'))
+		self.patn['uspc'] = str(uspc.encode('ascii','replace'))
 		# they switched from classification-ipc to classification-ipcr at some point, search both
 		ipc = (dom.getElementsByTagName('classification-ipc') + dom.getElementsByTagName('classification-ipcr'))[0]
 		try:
@@ -68,10 +88,13 @@ class XMLParser:
 		except TypeError:
 			# for classification-ipc which just gives a single string for each IPC
 			ipc = ipc.getElementsByTagName('main-classification')[0].childNodes[0].data
-		self.patn.ipc = str(ipc.encode('ascii','replace'))
+		
+		# self.patn.ipc = str(ipc.encode('ascii','replace'))
+		self.patn['ipc'] = str(ipc.encode('ascii','replace'))
 
 		elmsTitles = dom.getElementsByTagName('invention-title')[0].childNodes
-		self.patn.title = ''
+		# self.patn.title = ''
+		self.patn['title'] = ''
 		for node in elmsTitles:
 			# sometimes the title has subelements like italic text or what have you
 			# sometimes the subelements don't have text at the bottom
@@ -79,19 +102,23 @@ class XMLParser:
 			while node.nodeType != node.TEXT_NODE and node.childNodes:
 				node = node.childNodes[0]
 			if node.nodeType == node.TEXT_NODE:
-				self.patn.title += str(node.data.encode('ascii','replace'))
+				# self.patn.title += str(node.data.encode('ascii','replace'))
+				self.patn['title'] += str(node.data.encode('ascii','replace'))
 			else:
-				logging.warning('Skipped part of title %d in %s: %s', self.patn.pno, self.fn, node)
+				# logging.warning('Skipped part of title %d in %s: %s', self.patn.pno, self.fn, node)
+				logging.warning('Skipped part of title %d in %s: %s', self.patn['pno'], self.fn, node)
 
 		elmAssig = dom.getElementsByTagName('assignees')
 		if elmAssig:
 			elmAssig = elmAssig[0]
 			# sometimes it's an orgname, sometimes first + last, get all
 			ass = (elmAssig.getElementsByTagName('orgname') + elmAssig.getElementsByTagName('first-name') + elmAssig.getElementsByTagName('last-name'))
-			self.patn.assignee = str(' '.join([x.childNodes[0].data.encode('ascii','replace') for x in ass]))
+			# self.patn.assignee = str(' '.join([x.childNodes[0].data.encode('ascii','replace') for x in ass]))
+			self.patn['assignee'] = str(' '.join([x.childNodes[0].data.encode('ascii','replace') for x in ass]))
 
 		elmRefCit = dom.getElementsByTagName('references-cited')
-		self.patn.rawcites = []
+		# self.patn.rawcites = []
+		self.patn['rawcites'] = []
 		if elmRefCit:
 			for cite in elmRefCit[0].getElementsByTagName('patcit'):
 				if cite.getElementsByTagName('country')[0].childNodes[0].data == 'US':
@@ -101,5 +128,6 @@ class XMLParser:
 						# presume that pno cited is not a utility patent and ignore
 						continue
 					else:
-						self.patn.rawcites.append(pno)
+						# self.patn.rawcites.append(pno)
+						self.patn['rawcites'].append(pno)
 		return self.patn

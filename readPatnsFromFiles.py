@@ -56,13 +56,13 @@ db = client[dbname]
 if not 'patns' in dir():	# assume this is first time running
 	# don't overwrite patns!
 	# patns = dict()
-    patns = []
+	patns = []
 	# no need to re-run logging config
 	logging.basicConfig(filename=fnLog, level=logging.NOTSET, format = logFormat)
 	# purposely leave errorQ untouched on rerun, ditto filelists
 	fileQ = multiprocessing.JoinableQueue()
 	# dictQ = multiprocessing.JoinableQueue()
-    
+	
 	errorQ = multiprocessing.JoinableQueue()
 	xmlfilelist = [XMLParser.fr + x for x in os.listdir(XMLParser.fr) if x[-4:] == '.xml']
 	datfilelist = [DATParser.fr + x for x in os.listdir(DATParser.fr) if x[-4:] == '.dat']
@@ -78,7 +78,7 @@ def loadPatnFiles(dbase, fl):
 	map(fileQ.put, fl)
 	
 	# def work(fQ, dQ, eQ):
-    def work(fQ, eQ):
+	def work(fQ, eQ):
 		# TODO: should these be made fresh each time?
 		xmlp = XMLParser.XMLParser()
 		datp = DATParser.DATParser()
@@ -92,22 +92,22 @@ def loadPatnFiles(dbase, fl):
 			logging.info("Parsing %s", os.path.basename(fp))
 			try:
 				dpatns,badpatns = parser.parseFile(fp)
-                # The len fun below works for both dicts (badpatns) and arrays (dpatns)
+				# The len fun below works for both dicts (badpatns) and arrays (dpatns)
 				logging.info("%d (%d bad) found in %s", len(dpatns), len(badpatns), os.path.basename(fp))
-                
-                # DB: This next line, I think, is Andy loading the parsed good patents into the
-                # multicore queue. I just have each thread insert the patents straight into the db.
+				
+				# DB: This next line, I think, is Andy loading the parsed good patents into the
+				# multicore queue. I just have each thread insert the patents straight into the db.
 				# dQ.put(dpatns)
 
-                # DB: the below line inserts all of the good patents into
-                # the database collection 'patns'. Assumes dpatns is of type array of dicts.
-                dbase['patns'].insert(dpatns)
-    
+				# DB: the below line inserts all of the good patents into
+				# the database collection 'patns'. Assumes dpatns is of type array of dicts.
+				dbase['patns'].insert(dpatns)
+	
 				# parser.patns = dict()	# toss old patns
-                parser.patns = []
+				parser.patns = []
 				# Could deal with bad patns instead of tossing them, but probably not worth it.
-                # DB: put them into a mongo instance?
-                parser.badpatns = {}
+				# DB: put them into a mongo instance?
+				parser.badpatns = {}
 			except:
 				logging.error("Error parsing %s", os.path.basename(fp), exc_info=True)
 				eQ.put(fp)
@@ -115,32 +115,32 @@ def loadPatnFiles(dbase, fl):
 		logging.info("Worker finished.")
 		
 	for i in range(0, multiprocessing.cpu_count()):
-        # DB: The following line seems to be the main call of work. I hope
-        # multiprocessing.Process still works if I change dictQ to a mongod
-        # object or something?
+		# DB: The following line seems to be the main call of work. I hope
+		# multiprocessing.Process still works if I change dictQ to a mongod
+		# object or something?
 		# p = multiprocessing.Process(target=work, args=(fileQ, dictQ, errorQ))
-        p = multiprocessing.Process(target=work, args=(fileQ, errorQ))
+		p = multiprocessing.Process(target=work, args=(fileQ, errorQ))
 		p.daemon = True
 		p.start()
 		workerProcesses.append(p)
 		
-    """ DB: this while block doesn't serve any purpose but logging, and since I'm no longer
-        using dictQ it's broken. A later fix might be adding a log entry after dbase is
-        updated in work
+	""" DB: this while block doesn't serve any purpose but logging, and since I'm no longer
+		using dictQ it's broken. A later fix might be adding a log entry after dbase is
+		updated in work
 	while True in map(multiprocessing.Process.is_alive, workerProcesses) or not dictQ.empty():
 		try:
-            # DB: copies dictQ to dpatns unless that process takes longer than 1 sec
+			# DB: copies dictQ to dpatns unless that process takes longer than 1 sec
 			dpatns = dictQ.get(timeout=1)
-            
+			
 			patns.update(dpatns)
-            # DB: on second thought, perhaps the above command should be just
-            # where I load into Mongo.
+			# DB: on second thought, perhaps the above command should be just
+			# where I load into Mongo.
 			dictQ.task_done()
 			logging.info("patns now %d", len(patns))
 		except Queue.Empty:
 			pass
-    """
-    
+	"""
+	
 	# all workers are done, join up extraneous queues and such
 	for p in workerProcesses:
 		p.join()
@@ -152,7 +152,7 @@ def sanityCheck(patns):
 	'''Micellaneous cleanup run after the patents are all loaded.'''
 	def handFix(patns):
 		'''Fix bad, but fixable App dates'''
-        # DB: changed all below from patns[x].apd to patns.findOne('pno'=x)['apd']
+		# DB: changed all below from patns[x].apd to patns.findOne('pno'=x)['apd']
 		patns[3943504].apd = datetime.date(1975, 2, 25) # not 2975
 		patns[3964954].apd = datetime.date(1973, 5, 31) # not 9173
 		patns[3969699].apd = datetime.date(1975, 4, 11) # not 9175

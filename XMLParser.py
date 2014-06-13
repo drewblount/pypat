@@ -10,7 +10,7 @@ fr = '/Users/Shared/patent_raw_data/ipgb-2005-present/'
 
 class XMLParser:
 	def __init__(self):
-                # self.patns will be an array of dicts
+				# self.patns will be an array of dicts
 		self.patns = []
 		self.badPatns = {}
 		# self.badPatns isn't used anywhere in the code (it's always left empty)
@@ -39,7 +39,7 @@ class XMLParser:
 			self.patns.append(self.patn)
 		return (self.patns, self.badPatns)
 	
-    # previously returned a patent, should now return a patent dict
+	# previously returned a patent, should now return a patent dict
 	def parseXMLDom(self, dom):
 		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
 		try:
@@ -49,13 +49,13 @@ class XMLParser:
 			return
 
 
-                        
+						
 		# self.patn = Patent.Patent(pno)
 		self.patn = {
-            'rawcites' : [],
-            'cites' : [],
-            'citedby': []
-        }
+			'rawcites' : [],
+			'cites' : [],
+			'citedby': []
+		}
 		isd = elmPubRef.getElementsByTagName('date')[0].childNodes[0].data
 		# self.patn.isd = datetime.datetime.strptime(isd, "%Y%m%d").date()
 		self.patn['isd'] = datetime.datetime.strptime(isd, "%Y%m%d").date()

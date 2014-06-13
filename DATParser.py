@@ -19,10 +19,10 @@ class DATParser:
 		
 		# self.patn = Patent.Patent(-1)
 		self.patn = {
-            'rawcites' : [],
-            'cites' : [],
-            'citedby': []
-        }
+			'rawcites' : [],
+			'cites' : [],
+			'citedby': []
+		}
 		
 		self.state = 'PATN'
 		
@@ -32,7 +32,7 @@ class DATParser:
 		self.reWKU = r"WKU  0?([1-9][0-9]{6}).?" + self.reEOL
 		self.reAPD = r"APD  " + self.reDate
 		self.reTTL = r"TTL  (.*)$"
-		self.reMoreTTL = r"     (.*)$"
+		self.reMoreTTL = r"	 (.*)$"
 		self.reISD = r"ISD  " + self.reDate
 		self.reASSG = r"ASSG" + self.reEOL
 		self.reNAM = r"NAM  (.*)" + self.reEOL
@@ -47,12 +47,12 @@ class DATParser:
 		self.fn = os.path.basename(fp)
 		with open(fp) as fPatn:
 			# self.patn = Patent.Patent(-1)
-            # not sure if the following line is necessary
-            self.patn = {
-                'rawcites' : [],
-                'cites' : [],
-                'citedby': []
-            }
+			# not sure if the following line is necessary
+			self.patn = {
+				'rawcites' : [],
+				'cites' : [],
+				'citedby': []
+			}
 			for line in fPatn:
 				if self.state == 'PATN' or self.state == 'UREF/PATN' or self.state == 'WKU':
 					if re.match(self.rePATN, line) or self.state == 'WKU':
@@ -70,18 +70,18 @@ class DATParser:
 					if re.match(self.reCLAS, line):
 						self.parseCLAS(fPatn.next(), fPatn)
 		# catch that last damn patent
-        # if self.patn.pno not in self.badPatns:
-        #       self.patns[self.patn.pno] = self.patn
+		# if self.patn.pno not in self.badPatns:
+		#	   self.patns[self.patn.pno] = self.patn
 
-        ''' DB: I don't think the next two steps are necessary now that patns
-            is an array, and that each patent is added during its looping of the
-            above 'for'
-        if self.patn['pno'] not in self.badPatns:
-            self.patns.append(self.patn)
+		''' DB: I don't think the next two steps are necessary now that patns
+			is an array, and that each patent is added during its looping of the
+			above 'for'
+		if self.patn['pno'] not in self.badPatns:
+			self.patns.append(self.patn)
 
-        if -1 in self.patns:
+		if -1 in self.patns:
 			del(self.patns[-1])
-            '''
+			'''
 		return (self.patns, self.badPatns)
 		
 	def parsePATN(self, line, fPatn):
@@ -90,19 +90,19 @@ class DATParser:
 		match = re.match(self.reWKU, line)
 		if match:
 			pno = int(match.group(1))
-            # if self.patn.pno not in self.badPatns:
+			# if self.patn.pno not in self.badPatns:
 			if pno not in self.badPatns:
-                # self.patns[self.patn.pno] = self.patn
-                self.patns.append = self.patn
-            # Below: self.patn is initialized with
-            # the appropriate pno
-            self.patn = {
-                'rawcites' : [],
-                'cites' : [],
-                'citedby': []
-                'pno' : pno
-            }
-            
+				# self.patns[self.patn.pno] = self.patn
+				self.patns.append = self.patn
+			# Below: self.patn is initialized with
+			# the appropriate pno
+			self.patn = {
+				'rawcites' : [],
+				'cites' : [],
+				'citedby': []
+				'pno' : pno
+			}
+			
 			self.state = 'APD'
 		elif re.match(self.reNonUtil, line):
 			self.state = 'PATN' # it's some other type, just keep going
@@ -110,7 +110,7 @@ class DATParser:
 			# this has never happened
 			logging.warning("%s: PATN w/o WKU near %d in %s", self.state, self.patn.pno, self.fn)
 			# self.badPatns[self.patn.pno] = self.patn
-            self.badPatns[pno] = self.patn
+			self.badPatns[pno] = self.patn
 			self.state='PATN'
 			
 	def parseUREF(self, line, fPatn):
@@ -122,8 +122,8 @@ class DATParser:
 				# TODO this should probably include all citations
 				pass # bad reference, ignore
 			else:
-                # self.patn.rawcites.append(pno)
-                self.patn['rawcites'].append(pno)
+				# self.patn.rawcites.append(pno)
+				self.patn['rawcites'].append(pno)
 		else:
 			# this happens frequently
 			# just one less rawcite, no big deal even if it's findable
@@ -135,7 +135,7 @@ class DATParser:
 		if re.search(r'[12][0-9]{5}00', match.group(1)):	# occurs not infrequently
 			# I trust that this will never go wrong
 			# self.patn.apd = datetime.datetime.strptime(match.group(1), "%Y%m00").date()
-            self.patn['apd'] = datetime.datetime.strptime(match.group(1), "%Y%m00").date()
+			self.patn['apd'] = datetime.datetime.strptime(match.group(1), "%Y%m00").date()
 			self.patn['apq'] = Patent.d2q(self.patn['apd'])
 		else:
 			try:

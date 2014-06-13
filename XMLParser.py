@@ -12,7 +12,7 @@ class XMLParser:
 	def __init__(self):
                 # self.patns will be an array of dicts
 		self.patns = []
-		# self.badPatns = []
+		self.badPatns = {}
 		# self.badPatns isn't used anywhere in the code (it's always left empty)
 	def parseFile(self, fp):
 		self.fn = os.path.basename(fp)
@@ -37,9 +37,9 @@ class XMLParser:
 				self.patns[self.patn.pno] = self.patn
 			'''
 			self.patns.append(self.patn)
-		return (self.patns)
+		return (self.patns, self.badPatns)
 	
-                # previously returned a patent, should now return a patent dict
+    # previously returned a patent, should now return a patent dict
 	def parseXMLDom(self, dom):
 		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
 		try:

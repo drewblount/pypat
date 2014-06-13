@@ -12,7 +12,7 @@ class DATParser:
 	def __init__(self):
 		# self.patns = dict()
 		self.patns = []
-		self.badPatns = dict()
+		self.badPatns = {}
 		# I've left badPatns alone for now; ultimately, we'll want to keep a list 
 		# of bad patents in its own database, so badPatns should also be an array
 		# of dicts, not a dict of Patents.
@@ -47,7 +47,8 @@ class DATParser:
 		self.fn = os.path.basename(fp)
 		with open(fp) as fPatn:
 			# self.patn = Patent.Patent(-1)
-			self.patn = {
+            # not sure if the following line is necessary
+            self.patn = {
                 'rawcites' : [],
                 'cites' : [],
                 'citedby': []
@@ -69,10 +70,18 @@ class DATParser:
 					if re.match(self.reCLAS, line):
 						self.parseCLAS(fPatn.next(), fPatn)
 		# catch that last damn patent
-		if self.patn.pno not in self.badPatns:
-			self.patns[self.patn.pno] = self.patn
-		if -1 in self.patns:
+        # if self.patn.pno not in self.badPatns:
+        #       self.patns[self.patn.pno] = self.patn
+
+        ''' DB: I don't think the next two steps are necessary now that patns
+            is an array, and that each patent is added during its looping of the
+            above 'for'
+        if self.patn['pno'] not in self.badPatns:
+            self.patns.append(self.patn)
+
+        if -1 in self.patns:
 			del(self.patns[-1])
+            '''
 		return (self.patns, self.badPatns)
 		
 	def parsePATN(self, line, fPatn):
@@ -85,7 +94,15 @@ class DATParser:
 			if pno not in self.badPatns:
                 # self.patns[self.patn.pno] = self.patn
                 self.patns.append = self.patn
-			self.patn['pno'] = pno
+            # Below: self.patn is initialized with
+            # the appropriate pno
+            self.patn = {
+                'rawcites' : [],
+                'cites' : [],
+                'citedby': []
+                'pno' : pno
+            }
+            
 			self.state = 'APD'
 		elif re.match(self.reNonUtil, line):
 			self.state = 'PATN' # it's some other type, just keep going

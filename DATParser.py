@@ -96,7 +96,7 @@ class DATParser:
 			# if self.patn.pno not in self.badPatns:
 			if pno not in self.badPatns:
 				# self.patns[self.patn.pno] = self.patn
-				self.patns.append = self.patn
+				self.patns.append(self.patn)
 			# Below: self.patn is initialized with
 			# the appropriate pno
 			self.patn = {

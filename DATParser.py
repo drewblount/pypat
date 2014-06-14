@@ -6,7 +6,10 @@
 import datetime, re, logging, os
 import Patent
 
-fr = '/Users/Shared/patent_raw_data/dat/'
+# fr = '/Users/Shared/patent_raw_data/dat/'
+# DB: The following line is the source directory for the dat files to be parsed.
+fr = '/Users/drewblunt/Desktop/tests/'
+
 
 class DATParser:
 	def __init__(self):
@@ -99,7 +102,7 @@ class DATParser:
 			self.patn = {
 				'rawcites' : [],
 				'cites' : [],
-				'citedby': []
+				'citedby': [],
 				'pno' : pno
 			}
 			
@@ -135,15 +138,18 @@ class DATParser:
 		if re.search(r'[12][0-9]{5}00', match.group(1)):	# occurs not infrequently
 			# I trust that this will never go wrong
 			# self.patn.apd = datetime.datetime.strptime(match.group(1), "%Y%m00").date()
-			self.patn['apd'] = datetime.datetime.strptime(match.group(1), "%Y%m00").date()
+			apd = datetime.datetime.strptime(match.group(1), "%Y%m00").date()
+			self.patn['apd'] = datetime.datetime.combine(apd, datetime.datetime.min.time())
 			self.patn['apq'] = Patent.d2q(self.patn['apd'])
 		else:
 			try:
-				self.patn['apd'] = datetime.datetime.strptime(match.group(1), "%Y%m%d").date()
+				apd = datetime.datetime.strptime(match.group(1), "%Y%m%d").date()
+				self.patn['apd'] = datetime.datetime.combine(apd, datetime.datetime.min.time())
 			except ValueError:
 				# this happens frequently, often subtly wrong: 1980-06-31 &c
 				# so we'll chop the end off to preserve some date
-				self.patn['apd'] = datetime.datetime.strptime(match.group(1)[0:6], "%Y%m").date()
+				apd = datetime.datetime.strptime(match.group(1)[0:6], "%Y%m").date()
+				self.patn['apd'] = datetime.datetime.combine(apd, datetime.datetime.min.time())
 				logging.warning("Bad apd date: '%s' in %d in %s", match.group(1), self.patn['pno'], self.fn)
 			self.patn['apq'] = Patent.d2q(self.patn['apd'])
 		
@@ -173,7 +179,8 @@ class DATParser:
 		match = re.match(self.reISD, line)
 		if match:
 			try:
-				self.patn['isd'] = datetime.datetime.strptime(match.group(1), "%Y%m%d").date()
+				isd = datetime.datetime.strptime(match.group(1), "%Y%m%d").date()
+				self.patn['isd'] = datetime.datetime.combine(isd, datetime.datetime.min.time())
 			except ValueError:
 				# never happens
 				logging.warning("Bad isd date: '%s' in %d in %s", match.group(1), self.patn['pno'], self.fn)

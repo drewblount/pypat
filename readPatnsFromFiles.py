@@ -39,7 +39,7 @@ import os, time, logging, datetime, inspect
 import multiprocessing, Queue
 import DATParser, XMLParser, Patent
 
-import PyMongo
+from pymongo import MongoClient
 
 fnLog = 'patents.log'
 frOutputData = 'html/data/'
@@ -62,7 +62,6 @@ if not 'patns' in dir():	# assume this is first time running
 	# purposely leave errorQ untouched on rerun, ditto filelists
 	fileQ = multiprocessing.JoinableQueue()
 	# dictQ = multiprocessing.JoinableQueue()
-	
 	errorQ = multiprocessing.JoinableQueue()
 	xmlfilelist = [XMLParser.fr + x for x in os.listdir(XMLParser.fr) if x[-4:] == '.xml']
 	datfilelist = [DATParser.fr + x for x in os.listdir(DATParser.fr) if x[-4:] == '.dat']
@@ -74,15 +73,12 @@ def loadPatnFiles(dbase, fl):
 	logging.info("Started read at %s", time.strftime("%X %x"))
 	tStart = time.time()
 	workerProcesses = []
-	
 	map(fileQ.put, fl)
-	
-	# def work(fQ, dQ, eQ):
+
 	def work(fQ, eQ):
-		# TODO: should these be made fresh each time?
 		xmlp = XMLParser.XMLParser()
 		datp = DATParser.DATParser()
-		
+
 		while not fQ.empty():
 			fp = fQ.get()
 			if fp[-4:] == '.xml':
@@ -90,8 +86,10 @@ def loadPatnFiles(dbase, fl):
 			else:
 				parser = datp
 			logging.info("Parsing %s", os.path.basename(fp))
+			print("Parsing %s", os.path.basename(fp))
 			try:
 				dpatns,badpatns = parser.parseFile(fp)
+				print("file is parsed")
 				# The len fun below works for both dicts (badpatns) and arrays (dpatns)
 				logging.info("%d (%d bad) found in %s", len(dpatns), len(badpatns), os.path.basename(fp))
 				
@@ -101,7 +99,10 @@ def loadPatnFiles(dbase, fl):
 
 				# DB: the below line inserts all of the good patents into
 				# the database collection 'patns'. Assumes dpatns is of type array of dicts.
+				print "inserting..."
+				print dpatns
 				dbase['patns'].insert(dpatns)
+				print "...inserted"
 	
 				# parser.patns = dict()	# toss old patns
 				parser.patns = []
@@ -147,12 +148,15 @@ def loadPatnFiles(dbase, fl):
 	fileQ.join()	# should be instant as workers are already done
 	# dictQ.join()
 	logging.info("done reading files after %.2f minutes.", (time.time()-tStart)/60)
-
+"""
+	DB:
+	will have to rewrite this below part
+	
 def sanityCheck(patns):
 	'''Micellaneous cleanup run after the patents are all loaded.'''
 	def handFix(patns):
 		'''Fix bad, but fixable App dates'''
-		# DB: changed all below from patns[x].apd to patns.findOne('pno'=x)['apd']
+		# DB: change all below from patns[x].apd to patns.findOne('pno'=x)['apd']
 		patns[3943504].apd = datetime.date(1975, 2, 25) # not 2975
 		patns[3964954].apd = datetime.date(1973, 5, 31) # not 9173
 		patns[3969699].apd = datetime.date(1975, 4, 11) # not 9175
@@ -186,7 +190,7 @@ def sanityCheck(patns):
 	execfile('checkCoverage.py')	# import checkCoverage
 	missing = checkCoverage(patns)
 	handFix(patns)
-	
+
 def populateCites(patns):
 	'''Populate the patents' "citedby" lists'''
 	logging.info("Started reverse at %s", time.strftime("%X %x"))
@@ -210,6 +214,7 @@ def populateCites(patns):
 	print
 	logging.info("done after %.2f minutes.", (time.time()-tStart)/60)
 
+"""
 
 logging.info("-------------------------------------")
 
@@ -220,7 +225,7 @@ logging.info("-------------------------------------")
 #datfilelist = ['test.dat']
 
 
-loadPatnFiles(patns, xmlfilelist + datfilelist)
+loadPatnFiles(db, xmlfilelist + datfilelist)
 ''' DB: I commented out the next two funcs just for testing
 sanityCheck(patns)
 populateCites(patns)

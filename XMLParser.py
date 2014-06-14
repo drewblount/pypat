@@ -6,7 +6,9 @@
 import datetime, os, xml.dom.minidom, logging
 import Patent
 
-fr = '/Users/Shared/patent_raw_data/ipgb-2005-present/'
+# fr = '/Users/Shared/patent_raw_data/ipgb-2005-present/'
+# DB: The following line is the source directory for the xml files to be parsed.
+fr = '/Users/drewblunt/Desktop/tests/'
 
 class XMLParser:
 	def __init__(self):
@@ -37,42 +39,68 @@ class XMLParser:
 				self.patns[self.patn.pno] = self.patn
 			'''
 			self.patns.append(self.patn)
+		# print(self.patns)
 		return (self.patns, self.badPatns)
 	
 	# previously returned a patent, should now return a patent dict
 	def parseXMLDom(self, dom):
-		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
-		try:
-			pno = int(elmPubRef.getElementsByTagName('doc-number')[0].childNodes[0].data)
-		except ValueError:
-			# presume that pno found is not a utility patent and ignore
-			return
-
-
-						
-		# self.patn = Patent.Patent(pno)
+		
 		self.patn = {
 			'rawcites' : [],
 			'cites' : [],
 			'citedby': []
 		}
+		'''print("patent: ")
+		print(self.patn)
+		'''
+		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
+		print("elmPubRef: " + elmPubRef.toprettyxml())
+		try:
+			pno = int(elmPubRef.getElementsByTagName('doc-number')[0].childNodes[0].data)
+			self.patn['pno'] = pno
+		except ValueError:
+			print("ValueError")
+			# presume that pno found is not a utility patent and ignore
+			return
+						
+		# self.patn = Patent.Patent(pno)
+		
 		isd = elmPubRef.getElementsByTagName('date')[0].childNodes[0].data
 		# self.patn.isd = datetime.datetime.strptime(isd, "%Y%m%d").date()
-		self.patn['isd'] = datetime.datetime.strptime(isd, "%Y%m%d").date()
-		self.patn['isq'] = Patent.d2q(self.patn.isd)
+		isd = datetime.datetime.strptime(isd, "%Y%m%d").date()
+		# Mongo cannot accept dates, only date+time. Gotta pad isd with time = midnight.
+		self.patn['isd'] = datetime.datetime.combine(isd, datetime.datetime.min.time())
+		self.patn['isq'] = Patent.d2q(self.patn['isd'])
 
 		elmAppRef = dom.getElementsByTagName('application-reference')[0].getElementsByTagName('document-id')[0]
 		apd = elmAppRef.getElementsByTagName('date')[0].childNodes[0].data
 		# self.patn.apd = datetime.datetime.strptime(apd, "%Y%m%d").date()
-		self.patn['apd'] = datetime.datetime.strptime(apd, "%Y%m%d").date()
-		self.patn['apq'] = Patent.d2q(self.patn.apd)	# NB: may be out of nQuarters range
+		apd = datetime.datetime.strptime(apd, "%Y%m%d").date()
+		# again, have to pad the date to make it a date+time
+		self.patn['apd'] = datetime.datetime.combine(apd, datetime.datetime.min.time())
+		self.patn['apq'] = Patent.d2q(self.patn['apd'])	# NB: may be out of nQuarters range
 		
 		uspc = dom.getElementsByTagName('classification-national')[0]
 		uspc = uspc.getElementsByTagName('main-classification')[0].childNodes[0].data
+		
 		# self.patn.uspc = str(uspc.encode('ascii','replace'))
 		self.patn['uspc'] = str(uspc.encode('ascii','replace'))
+		
+		''' DB:
+			The most recent 2014 xmls don't have ipc or ipcr classifications, so the below code doesn't work. 
+			Since we've never concerned ourselves with that data anyway, I'm not worrying about loading it
+			for the years where it was stored.
+			
 		# they switched from classification-ipc to classification-ipcr at some point, search both
 		ipc = (dom.getElementsByTagName('classification-ipc') + dom.getElementsByTagName('classification-ipcr'))[0]
+		
+		print "help?"
+		
+		print "here?"
+		print self.patn
+		
+	
+		
 		try:
 			# for classification-ipcr which breaks out each part of the IPC
 			# section-class-subclass group/subgroup
@@ -92,6 +120,8 @@ class XMLParser:
 		# self.patn.ipc = str(ipc.encode('ascii','replace'))
 		self.patn['ipc'] = str(ipc.encode('ascii','replace'))
 
+		'''
+
 		elmsTitles = dom.getElementsByTagName('invention-title')[0].childNodes
 		# self.patn.title = ''
 		self.patn['title'] = ''
@@ -108,7 +138,9 @@ class XMLParser:
 				# logging.warning('Skipped part of title %d in %s: %s', self.patn.pno, self.fn, node)
 				logging.warning('Skipped part of title %d in %s: %s', self.patn['pno'], self.fn, node)
 
+
 		elmAssig = dom.getElementsByTagName('assignees')
+
 		if elmAssig:
 			elmAssig = elmAssig[0]
 			# sometimes it's an orgname, sometimes first + last, get all

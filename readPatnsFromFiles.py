@@ -89,7 +89,7 @@ def loadPatnFiles(dbase, fl):
 			print("Parsing %s", os.path.basename(fp))
 			try:
 				dpatns,badpatns = parser.parseFile(fp)
-				print("file is parsed")
+				print("%s is parsed.", os.path.basename(fp))
 				# The len fun below works for both dicts (badpatns) and arrays (dpatns)
 				logging.info("%d (%d bad) found in %s", len(dpatns), len(badpatns), os.path.basename(fp))
 				
@@ -99,10 +99,8 @@ def loadPatnFiles(dbase, fl):
 
 				# DB: the below line inserts all of the good patents into
 				# the database collection 'patns'. Assumes dpatns is of type array of dicts.
-				print "inserting..."
-				print dpatns
 				dbase['patns'].insert(dpatns)
-				print "...inserted"
+				print ("%s is in the database.", os.path.basename(fp))
 	
 				# parser.patns = dict()	# toss old patns
 				parser.patns = []

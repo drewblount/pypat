@@ -29,6 +29,7 @@ class DATParser:
 		
 		self.state = 'PATN'
 		
+		# EndOfLine: whitespace then end of line ($)
 		self.reEOL = r"[ \t\r]*$"
 		self.reDate = r"([0-9]{8})" + self.reEOL
 		self.rePATN = r"PATN" + self.reEOL
@@ -45,8 +46,14 @@ class DATParser:
 		self.reUREF = r"UREF" + self.reEOL
 		self.rePNO = r"PNO  (.*)" + self.reEOL # loose because some refs are crazy
 		self.reNonUtil = r"WKU  (RE|D|T|PP|H)"
+		# DB: the ones below are for parsing the abstract
+		self.reABS = r"ABST" + self.reEOL
+		self.rePAL = r"(PAL  |PAR  )(.*)" + self.reEOL # the first line of the abstract
+		# each line of the abstract after the first is proceeded by five spaces.
+		self.reAbsText = r"(     )(.*)" + self.reEOL
 	
 	def parseFile(self, fp):
+		print "parseFile!"
 		self.fn = os.path.basename(fp)
 		with open(fp) as fPatn:
 			# self.patn = Patent.Patent(-1)
@@ -57,11 +64,17 @@ class DATParser:
 				'citedby': []
 			}
 			for line in fPatn:
+				# print ('line parse; state = %s', self.state, line)
 				if self.state == 'PATN' or self.state == 'UREF/PATN' or self.state == 'WKU':
 					if re.match(self.rePATN, line) or self.state == 'WKU':
+						print 1
 						self.parsePATN(line, fPatn)
 					elif self.state == 'UREF/PATN' and re.match(self.reUREF, line):
+						print 2
 						self.parseUREF(fPatn.next(), fPatn)
+					elif re.match(self.reABS, line):
+						self.parseABS(fPatn.next(), fPatn)
+
 				elif self.state == 'APD':
 					# need to store the match because APD is on the same line, not next
 					match = re.match(self.reAPD, line)
@@ -86,6 +99,7 @@ class DATParser:
 			del(self.patns[-1])
 			'''
 		return (self.patns, self.badPatns)
+			
 		
 	def parsePATN(self, line, fPatn):
 		if self.state != 'WKU':
@@ -96,22 +110,22 @@ class DATParser:
 			# if self.patn.pno not in self.badPatns:
 			if pno not in self.badPatns:
 				# self.patns[self.patn.pno] = self.patn
+				print(self.patn)
+				self.patn = {
+					'rawcites' : [],
+					'cites' : [],
+					'citedby': [],
+					'pno' : pno
+				}
 				self.patns.append(self.patn)
 			# Below: self.patn is initialized with
 			# the appropriate pno
-			self.patn = {
-				'rawcites' : [],
-				'cites' : [],
-				'citedby': [],
-				'pno' : pno
-			}
-			
-			self.state = 'APD'
+				self.state = 'APD'
 		elif re.match(self.reNonUtil, line):
 			self.state = 'PATN' # it's some other type, just keep going
 		else:
 			# this has never happened
-			logging.warning("%s: PATN w/o WKU near %d in %s", self.state, self.patn.pno, self.fn)
+			logging.warning("%s: PATN w/o WKU near %d in %s", self.state, self.patn['pno'], self.fn)
 			# self.badPatns[self.patn.pno] = self.patn
 			self.badPatns[pno] = self.patn
 			self.state='PATN'
@@ -133,7 +147,26 @@ class DATParser:
 			# be sure that next line isn't a PATN or something though
 			logging.warning("UREF w/o PNO in %d in %s (%s)",\
 			 	self.patn['pno'], self.fn, line.rstrip())
-			
+		
+	def parseABS(self, line, fPatn):
+		match = re.match(self.rePAL, line)
+		if match:
+			abs = match.group(2)
+			line = fPatn.next()
+			match = re.match(self.reAbsText, line)
+			while match:
+				abs += match.group(2)
+				try:
+					line = fPatn.next()
+				except StopIteration: # thrown at EOF
+					break
+				else:
+					match = re.match(self.reAbsText, line)
+					self.state = 'WKU' # ready to parse next patent
+					self.patn['abstract'] = abs
+		else:
+			logging.warning("%s: Weird abstract near %d in %s", self.state, self.patn['pno'], self.fn)
+
 	def parseAPD(self, match, fPatn):
 		if re.search(r'[12][0-9]{5}00', match.group(1)):	# occurs not infrequently
 			# I trust that this will never go wrong

@@ -53,7 +53,6 @@ class DATParser:
 		self.reAbsText = r"(     )(.*)" + self.reEOL
 	
 	def parseFile(self, fp):
-		print "parseFile!"
 		self.fn = os.path.basename(fp)
 		with open(fp) as fPatn:
 			# self.patn = Patent.Patent(-1)
@@ -61,16 +60,15 @@ class DATParser:
 			self.patn = {
 				'rawcites' : [],
 				'cites' : [],
-				'citedby': []
+				'citedby': [],
+				'pno' : -1
 			}
 			for line in fPatn:
 				# print ('line parse; state = %s', self.state, line)
 				if self.state == 'PATN' or self.state == 'UREF/PATN' or self.state == 'WKU':
 					if re.match(self.rePATN, line) or self.state == 'WKU':
-						print 1
 						self.parsePATN(line, fPatn)
 					elif self.state == 'UREF/PATN' and re.match(self.reUREF, line):
-						print 2
 						self.parseUREF(fPatn.next(), fPatn)
 					elif re.match(self.reABS, line):
 						self.parseABS(fPatn.next(), fPatn)
@@ -110,7 +108,7 @@ class DATParser:
 			# if self.patn.pno not in self.badPatns:
 			if pno not in self.badPatns:
 				# self.patns[self.patn.pno] = self.patn
-				print(self.patn)
+				# print(self.patn)
 				self.patn = {
 					'rawcites' : [],
 					'cites' : [],
@@ -127,7 +125,7 @@ class DATParser:
 			# this has never happened
 			logging.warning("%s: PATN w/o WKU near %d in %s", self.state, self.patn['pno'], self.fn)
 			# self.badPatns[self.patn.pno] = self.patn
-			self.badPatns[pno] = self.patn
+			self.badPatns[self.patn['pno']] = self.patn
 			self.state='PATN'
 			
 	def parseUREF(self, line, fPatn):

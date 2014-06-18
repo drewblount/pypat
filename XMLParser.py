@@ -34,7 +34,7 @@ class XMLParser:
 			self.dom = xml.dom.minidom.parseString(sPatn)	# save dom for debugging convenience
 			self.patn = self.parseXMLDom(self.dom)
 			
-			''' I comment this out because badpatns is apparently never used
+			'''
 			if self.patn != None and self.patn.pno not in self.badPatns:
 				self.patns[self.patn.pno] = self.patn
 			'''
@@ -50,16 +50,14 @@ class XMLParser:
 			'cites' : [],
 			'citedby': []
 		}
-		'''print("patent: ")
-		print(self.patn)
-		'''
+
+
 		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
-		print("elmPubRef: " + elmPubRef.toprettyxml())
+
 		try:
 			pno = int(elmPubRef.getElementsByTagName('doc-number')[0].childNodes[0].data)
 			self.patn['pno'] = pno
 		except ValueError:
-			print("ValueError")
 			# presume that pno found is not a utility patent and ignore
 			return
 						
@@ -162,4 +160,13 @@ class XMLParser:
 					else:
 						# self.patn.rawcites.append(pno)
 						self.patn['rawcites'].append(pno)
+
+		# DB: I wrote this part to load the abstracts, copying the elmAssig codeblock above
+		elmAbstract = dom.getElementsByTagName('abstract')
+		if elmAbstract:
+			elmAbstract = elmAbstract[0]
+			abs = ""
+			pgraphs = elmAbstract.getElementsByTagName('p')
+			self.patn['abstract'] = str('\n'.join([p.childNodes[0].data.encode('ascii','replace') for p in pgraphs]))
+
 		return self.patn

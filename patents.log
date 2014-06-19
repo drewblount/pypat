@@ -1,0 +1,48 @@
+2014-06-17 17:04:35,956 INFO MainProcess	-------------------------------------
+2014-06-17 17:04:35,956 INFO MainProcess	Started read at 17:04:35 06/17/14
+2014-06-17 17:04:35,985 INFO Process-1	Parsing 1976.dat
+2014-06-17 17:04:35,986 INFO Process-2	Parsing test.dat
+2014-06-17 17:04:35,987 INFO Process-3	Worker finished.
+2014-06-17 17:04:35,989 INFO Process-4	Worker finished.
+2014-06-17 17:04:36,008 INFO Process-2	3 (0 bad) found in test.dat
+2014-06-17 17:04:36,009 WARNING Process-1	TTL w/o ISD in 3930276 in 1976.dat
+2014-06-17 17:04:36,011 WARNING Process-1	TTL w/o ISD in 3930279 in 1976.dat
+2014-06-17 17:04:36,011 INFO Process-2	Worker finished.
+2014-06-17 17:04:36,016 WARNING Process-1	TTL w/o ISD in 3930285 in 1976.dat
+2014-06-17 17:04:36,023 WARNING Process-1	TTL w/o ISD in 3930293 in 1976.dat
+2014-06-17 17:04:36,024 WARNING Process-1	WKU: PATN w/o WKU near 3930295 in 1976.dat
+2014-06-17 17:04:36,025 ERROR Process-1	Error parsing 1976.dat
+Traceback (most recent call last):
+  File "readPatnsFromFiles.py", line 91, in work
+    dpatns,badpatns = parser.parseFile(fp)
+  File "/Users/drewblunt/Documents/CAC/pypat/DATParser.py", line 71, in parseFile
+    self.parsePATN(line, fPatn)
+  File "/Users/drewblunt/Documents/CAC/pypat/DATParser.py", line 130, in parsePATN
+    self.badPatns[pno] = self.patn
+UnboundLocalError: local variable 'pno' referenced before assignment
+2014-06-17 17:04:36,026 INFO Process-1	Worker finished.
+2014-06-17 17:04:36,028 INFO MainProcess	done reading files after 0.00 minutes.
+2014-06-17 17:06:03,065 INFO MainProcess	-------------------------------------
+2014-06-17 17:06:03,065 INFO MainProcess	Started read at 17:06:03 06/17/14
+2014-06-17 17:06:03,075 INFO Process-1	Parsing 1976.dat
+2014-06-17 17:06:03,077 INFO Process-2	Parsing test.dat
+2014-06-17 17:06:03,077 INFO Process-3	Worker finished.
+2014-06-17 17:06:03,080 INFO Process-4	Worker finished.
+2014-06-17 17:06:03,095 INFO Process-2	3 (0 bad) found in test.dat
+2014-06-17 17:06:03,096 WARNING Process-1	TTL w/o ISD in 3930276 in 1976.dat
+2014-06-17 17:06:03,099 INFO Process-2	Worker finished.
+2014-06-17 17:06:03,099 WARNING Process-1	TTL w/o ISD in 3930279 in 1976.dat
+2014-06-17 17:06:03,104 WARNING Process-1	TTL w/o ISD in 3930285 in 1976.dat
+2014-06-17 17:06:03,113 WARNING Process-1	TTL w/o ISD in 3930293 in 1976.dat
+2014-06-17 17:06:03,116 WARNING Process-1	WKU: PATN w/o WKU near 3930295 in 1976.dat
+2014-06-17 17:06:03,116 ERROR Process-1	Error parsing 1976.dat
+Traceback (most recent call last):
+  File "readPatnsFromFiles.py", line 91, in work
+    dpatns,badpatns = parser.parseFile(fp)
+  File "/Users/drewblunt/Documents/CAC/pypat/DATParser.py", line 71, in parseFile
+    self.parsePATN(line, fPatn)
+  File "/Users/drewblunt/Documents/CAC/pypat/DATParser.py", line 130, in parsePATN
+    self.badPatns[pno] = self.patn
+UnboundLocalError: local variable 'pno' referenced before assignment
+2014-06-17 17:06:03,117 INFO Process-1	Worker finished.
+2014-06-17 17:06:03,119 INFO MainProcess	done reading files after 0.00 minutes.

@@ -1,5 +1,14 @@
+
+# assumes that patns is the db.collection which was loaded
+# This will run much faster if patns has been indexed by pno.
+
+from pymongo import MongoClient
+# is that^ necessary?
+
 def checkCoverage(patns):
 	'''Check that the first patent from each file is included in patns'''
+	# DB: Does not include entries after 20050104. How did Andy load
+	# all of those numbers?
 	checkXMLs = {\
 	'ipgb20050104' : 6836899,\
 	'ipgb20050111' : 6839904,\
@@ -325,7 +334,7 @@ def checkCoverage(patns):
 	nGood = 0
 	missing = []
 	for check in checkd:
-		if not patns.has_key(checkd[check]):
+		if not patns.find_one({'pno':checkd[check]}):
 			logging.error('Missing %d from %s', checkd[check], str(check))
 			print 'Missing', checkd[check], 'from', check
 			missing.append(check)

@@ -36,4 +36,9 @@ fixes = [
 
 for fix in fixes:
 	patents.update({ 'pno': fix[0] },
-				   { '$set': { 'apd': fix[1]}})
+				   { '$set': { 'apd': fix[1], 'apq':Patent.d2q(fix[1])}})
+
+# This is a manual fix from Andy's code.
+# 4469216's original apd is in year 8198 (??)
+patents.update({ 'pno': 4469216 },
+			   {'$unset': {'apd': '', 'apq': ''}})

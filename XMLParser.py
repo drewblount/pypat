@@ -177,8 +177,7 @@ class XMLParser:
 	# From the StackOverflow source, I changed to use '\n'.join rather than
 	# looped append with " ".
 	def handleTok(self, tokenlist):
-		texts = ""
-		'\n'.join([self.getText(token.childNodes) for token in tokenlist])
+		texts = '\n'.join([self.getText(token.childNodes) for token in tokenlist])
 		# for token in tokenlist:
 			# texts += " "+ getText(token.childNodes)
 		return texts

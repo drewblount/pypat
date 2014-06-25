@@ -85,11 +85,11 @@ def loadPatnFiles(dbase, fl):
 				parser = xmlp
 			else:
 				parser = datp
-			logging.info("Parsing %s", os.path.basename(fp))
-			print("Parsing %s", os.path.basename(fp))
+			logging.info('Parsing %s', os.path.basename(fp))
+			print ('Parsing ' + os.path.basename(fp))
 			try:
 				dpatns,badpatns = parser.parseFile(fp)
-				print("%s is parsed.", os.path.basename(fp))
+				print(os.path.basename(fp) + " is parsed.")
 				# The len fun below works for both dicts (badpatns) and arrays (dpatns)
 				logging.info("%d (%d bad) found in %s", len(dpatns), len(badpatns), os.path.basename(fp))
 				
@@ -100,7 +100,7 @@ def loadPatnFiles(dbase, fl):
 				# DB: the below line inserts all of the good patents into
 				# the database collection 'patns'. Assumes dpatns is of type array of dicts.
 				dbase['patns'].insert(dpatns)
-				print ("%s is in the database.", os.path.basename(fp))
+				print (os.path.basename(fp) + " is in the database.")
 	
 				# parser.patns = dict()	# toss old patns
 				parser.patns = []
@@ -147,47 +147,6 @@ def loadPatnFiles(dbase, fl):
 	# dictQ.join()
 	logging.info("done reading files after %.2f minutes.", (time.time()-tStart)/60)
 """
-	DB:
-	will have to rewrite this below part
-	
-def sanityCheck(patns):
-	'''Micellaneous cleanup run after the patents are all loaded.'''
-	def handFix(patns):
-		'''Fix bad, but fixable App dates'''
-		# DB: change all below from patns[x].apd to patns.findOne('pno'=x)['apd']
-		patns[3943504].apd = datetime.date(1975, 2, 25) # not 2975
-		patns[3964954].apd = datetime.date(1973, 5, 31) # not 9173
-		patns[3969699].apd = datetime.date(1975, 4, 11) # not 9175
-		patns[4010353].apd = datetime.date(1974, 9, 11) # not 9174
-		patns[4020425].apd = datetime.date(1976, 3, 26) # not 2976
-		patns[4032532].apd = datetime.date(1973, 3, 1) # not 9173
-		patns[4041523].apd = datetime.date(1976, 6, 1) # not 9176
-		patns[4135654].apd = datetime.date(1977, 4, 11) # not 9177
-		patns[4198308].apd = datetime.date(1978, 7, 21) # not 7978
-		patns[4255928].apd = datetime.date(1978, 12, 11) # not 9178
-		patns[4474874].apd = datetime.date(1983, 3, 11) # not 9183
-		patns[4542062].apd = datetime.date(1982, 1, 20) # not 2982
-		patns[4596904].apd = datetime.date(1984, 5, 25) # not 2984
-		patns[4709214].apd = datetime.date(1986, 4, 28) # not 2986
-		patns[4725260].apd = datetime.date(1987, 3, 24) # not 2987
-		patns[4732727].apd = datetime.date(1986, 4, 3) # not 9186
-		patns[4739365].apd = datetime.date(1987, 5, 28) # not 2987
-		# Having fixed date, fix quarter
-		for pno in [3943504, 3964954, 3969699, 4010353, 4020425, 4032532, 4041523, 4135654, 4198308,\
-			4255928, 4474874, 4542062, 4596904, 4709214, 4725260, 4732727, 4739365]:
-			patns[pno].apq = Patent.d2q(patns[pno].apd)
-			
-		# datetime.date(8198, 4, 5) ???? even on patn image!
-		if hasattr(patns[4469216], 'apd'):
-			del(patns[4469216].apd, patns[4469216].apq)
-			
-		# the only bad (missing) TTL
-		# b/c missing title, not included by current scripts
-		# patns[5001050].title = 'PH.phi.29 DNA polymerase'
-		
-	execfile('checkCoverage.py')	# import checkCoverage
-	missing = checkCoverage(patns)
-	handFix(patns)
 
 def populateCites(patns):
 	'''Populate the patents' "citedby" lists'''
@@ -224,7 +183,8 @@ logging.info("-------------------------------------")
 
 
 loadPatnFiles(db, xmlfilelist + datfilelist)
+execfile('fixDates.py')
+execfile('checkCoverage.py')
 ''' DB: I commented out the next two funcs just for testing
-sanityCheck(patns)
 populateCites(patns)
 '''

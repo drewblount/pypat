@@ -85,16 +85,9 @@ class XMLParser:
 		self.patn['uspc'] = str(uspc.encode('ascii','replace'))
 		
 		# DB:
-			The most recent 2014 xmls don't have ipc or ipcr classifications, so the below code doesn't work. 
-			Since we've never concerned ourselves with that data anyway, I'm not worrying about loading it
-			for the years where it was stored.
 			
 		# they switched from classification-ipc to classification-ipcr at some point, search both
-		ipc = (dom.getElementsByTagName('
-		
-		
-		
-		') + dom.getElementsByTagName('classification-ipcr'))[0]
+		ipc = (dom.getElementsByTagName('classification-ipc') + dom.getElementsByTagName('classification-ipcr'))[0]
 	
 		
 		try:

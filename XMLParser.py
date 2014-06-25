@@ -12,10 +12,10 @@ fr = '/Users/drewblunt/Desktop/tests/'
 
 class XMLParser:
 	def __init__(self):
-				# self.patns will be an array of dicts
+		# self.patns will be an array of dicts
 		self.patns = []
 		self.badPatns = {}
-		# self.badPatns isn't used anywhere in the code (it's always left empty)
+	# self.badPatns isn't used anywhere in the code (it's always left empty)
 	def parseFile(self, fp):
 		self.fn = os.path.basename(fp)
 		buf = ''
@@ -34,33 +34,27 @@ class XMLParser:
 			self.dom = xml.dom.minidom.parseString(sPatn)	# save dom for debugging convenience
 			self.patn = self.parseXMLDom(self.dom)
 			
-			'''
-			if self.patn != None and self.patn.pno not in self.badPatns:
-				self.patns[self.patn.pno] = self.patn
-			'''
-			self.patns.append(self.patn)
+			if self.patn != None and self.patn['pno'] not in self.badPatns:
+				self.patns.append(self.patn)
 		# print(self.patns)
 		return (self.patns, self.badPatns)
 	
 	# previously returned a patent, should now return a patent dict
 	def parseXMLDom(self, dom):
 		
-		self.patn = {
-			'rawcites' : [],
-			'cites' : [],
-			'citedby': []
-		}
-
-
 		elmPubRef = dom.getElementsByTagName('publication-reference')[0].getElementsByTagName('document-id')[0]
-
 		try:
 			pno = int(elmPubRef.getElementsByTagName('doc-number')[0].childNodes[0].data)
-			self.patn['pno'] = pno
+			self.patn = {
+				'rawcites' : [],
+				'cites' : [],
+				'citedby': [],
+				'pno' : pno
+			}
 		except ValueError:
 			# presume that pno found is not a utility patent and ignore
 			return
-						
+		
 		# self.patn = Patent.Patent(pno)
 		
 		isd = elmPubRef.getElementsByTagName('date')[0].childNodes[0].data
@@ -69,7 +63,7 @@ class XMLParser:
 		# Mongo cannot accept dates, only date+time. Gotta pad isd with time = midnight.
 		self.patn['isd'] = datetime.datetime.combine(isd, datetime.datetime.min.time())
 		self.patn['isq'] = Patent.d2q(self.patn['isd'])
-
+		
 		elmAppRef = dom.getElementsByTagName('application-reference')[0].getElementsByTagName('document-id')[0]
 		apd = elmAppRef.getElementsByTagName('date')[0].childNodes[0].data
 		# self.patn.apd = datetime.datetime.strptime(apd, "%Y%m%d").date()
@@ -84,33 +78,29 @@ class XMLParser:
 		# self.patn.uspc = str(uspc.encode('ascii','replace'))
 		self.patn['uspc'] = str(uspc.encode('ascii','replace'))
 		
-		# DB:
-			
-		# they switched from classification-ipc to classification-ipcr at some point, search both
 		ipc = (dom.getElementsByTagName('classification-ipc') + dom.getElementsByTagName('classification-ipcr'))[0]
-	
+				
 		
 		try:
-			# for classification-ipcr which breaks out each part of the IPC
-			# section-class-subclass group/subgroup
-			# NB: this is not the same format for these as in the DAT files
+		# for classification-ipcr which breaks out each part of the IPC
+		# section-class-subclass group/subgroup
+		# NB: this is not the same format for these as in the DAT files
 			ipc = "%s%s%s %s/%s" % tuple([x.childNodes[0].data for x in ipc.childNodes[5:14] if x.nodeType == 1])
 		except IndexError:
-			# sometimes the main-group is just <main-group/> instead of a real value
-			# this is treated as '1' in the online database
-			# so that's what we'll do too
+		# sometimes the main-group is just <main-group/> instead of a real value
+		# this is treated as '1' in the online database
+		# so that's what we'll do too
 			ipc1 = "%s%s%s" % tuple([x.childNodes[0].data for x in ipc.childNodes[5:10] if x.nodeType == 1])
 			ipc2 = " 01/%s" % (ipc.childNodes[13],)
 			ipc = ipc1 + ipc2
 		except TypeError:
-			# for classification-ipc which just gives a single string for each IPC
+		# for classification-ipc which just gives a single string for each IPC
 			ipc = ipc.getElementsByTagName('main-classification')[0].childNodes[0].data
 		
 		# self.patn.ipc = str(ipc.encode('ascii','replace'))
 		self.patn['ipc'] = str(ipc.encode('ascii','replace'))
-
-
-
+			
+		
 		elmsTitles = dom.getElementsByTagName('invention-title')[0].childNodes
 		# self.patn.title = ''
 		self.patn['title'] = ''
@@ -126,16 +116,32 @@ class XMLParser:
 			else:
 				# logging.warning('Skipped part of title %d in %s: %s', self.patn.pno, self.fn, node)
 				logging.warning('Skipped part of title %d in %s: %s', self.patn['pno'], self.fn, node)
-
-
+		
+		
 		elmAssig = dom.getElementsByTagName('assignees')
-
+		
 		if elmAssig:
 			elmAssig = elmAssig[0]
 			# sometimes it's an orgname, sometimes first + last, get all
 			ass = (elmAssig.getElementsByTagName('orgname') + elmAssig.getElementsByTagName('first-name') + elmAssig.getElementsByTagName('last-name'))
 			# self.patn.assignee = str(' '.join([x.childNodes[0].data.encode('ascii','replace') for x in ass]))
 			self.patn['assignee'] = str(' '.join([x.childNodes[0].data.encode('ascii','replace') for x in ass]))
+
+		# DB: I wrote this part to load the abstracts, copying the elmAssig codeblock above
+		elmAbstract = dom.getElementsByTagName('abstract')
+		if elmAbstract:
+			elmAbstract = elmAbstract[0]
+			pgraphs = elmAbstract.getElementsByTagName('p')
+			# handleTok defined/explained below
+			# dressing around handleTok taken from Andy's code
+			abs = str(self.handleTok(pgraphs).encode('ascii','replace'))
+			# "Element instance has no attribute 'data' ": is this because some
+			# abstracts are long enough to be stored by xmldom as two nodes?
+			# see https://mail.python.org/pipermail/tutor/2004-July/030397.html
+			# self.patn['abstract'] = str('\n'.join([p.childNodes[0].data.encode('ascii','replace') for p in pgraphs]))
+			self.patn['abstract'] = abs
+
+
 
 		elmRefCit = dom.getElementsByTagName('references-cited')
 		# self.patn.rawcites = []
@@ -152,12 +158,28 @@ class XMLParser:
 						# self.patn.rawcites.append(pno)
 						self.patn['rawcites'].append(pno)
 
-		# DB: I wrote this part to load the abstracts, copying the elmAssig codeblock above
-		elmAbstract = dom.getElementsByTagName('abstract')
-		if elmAbstract:
-			elmAbstract = elmAbstract[0]
-			abs = ""
-			pgraphs = elmAbstract.getElementsByTagName('p')
-			self.patn['abstract'] = str('\n'.join([p.childNodes[0].data.encode('ascii','replace') for p in pgraphs]))
+
 
 		return self.patn
+
+	# Following two functions help parse especially long abstracts.
+	# found on StackOverflow: http://stackoverflow.com/questions/6653128
+	# Thanks to asker 'coffee' and answerer 'kmdent'. My changes commented.
+	# I added each 'self' argument in keeping with Andy's style.
+
+	def getText(self, nodelist):
+		rc = []
+		for node in nodelist:
+			if node.nodeType == node.TEXT_NODE:
+				rc.append(node.data)
+		return ''.join(rc)
+
+	# From the StackOverflow source, I changed to use '\n'.join rather than
+	# looped append with " ".
+	def handleTok(self, tokenlist):
+		texts = ""
+		'\n'.join([self.getText(token.childNodes) for token in tokenlist])
+		# for token in tokenlist:
+			# texts += " "+ getText(token.childNodes)
+		return texts
+

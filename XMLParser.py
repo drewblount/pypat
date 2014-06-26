@@ -143,9 +143,12 @@ class XMLParser:
 
 
 
-		elmRefCit = dom.getElementsByTagName('references-cited')
-		# self.patn.rawcites = []
 		self.patn['rawcites'] = []
+		elmRefCit = dom.getElementsByTagName('references-cited')
+		if not elmRefCit:
+			# the data changes citation field-name convention between '05 and '14.
+			elmRefCit = dom.getElementsByTagName('us-references-cited')
+		
 		if elmRefCit:
 			for cite in elmRefCit[0].getElementsByTagName('patcit'):
 				if cite.getElementsByTagName('country')[0].childNodes[0].data == 'US':
@@ -157,7 +160,8 @@ class XMLParser:
 					else:
 						# self.patn.rawcites.append(pno)
 						self.patn['rawcites'].append(pno)
-
+		else:
+			logging.warning('No citations for %d in %s: %s', self.patn['pno'], self.fn, node)
 
 
 		return self.patn

@@ -11,15 +11,15 @@ patents = client[dbname]['patns']
 logging.info("Started reverse at %s", time.strftime("%X %x"))
 	tStart = time.time()
 
-
-for citingPatn in patents.find():
+# Load only the pno and rawcites from each patent
+for citingPatn in patents.find({}, {'rawcites':1, 'pno':1}):
 	citingNo = citingPatn['pno']
+	# makes sure the patents can be quickly addressed by pnum
+	patents.ensureIndex({'pno': 1})
 	for citedPNo in citingPatn['rawcites'] :
-		inDB = patents.find_one({'pno':citedPNo})
-		if inDB:
-			newCites, newCitedBy = inDB['cites']+[citingNo], inDB['citedby']+[citingNo]
+		newCites, newCitedBy = inDB['cites']+[citingNo], inDB['citedby']+[citingNo]
 			patents.update({ 'pno' : citedPNo},
-						   {'$set' :
-						   {'cites': newCites, 'citedby': newCitedBy} },
-						   # (below:) stops looking once it finds citedPNo
-						   {'multi':false})
+				       # adds citingNo to the array citedby
+				       {'$push' : {'citedby': citingNo}},
+				       # stops looking for patents to update once citedPNo is found
+				       {'multi':false})

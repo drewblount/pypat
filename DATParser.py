@@ -8,8 +8,8 @@ import Patent
 
 # fr = '/Users/Shared/patent_raw_data/dat/'
 # DB: The following line is the source directory for the dat files to be parsed.
-fr = '/Users/drewblunt/Desktop/tests/'
-
+# fr = '/Users/drewblunt/Desktop/tests/'
+fr = '/Volumes/7200/patent_raw_data/dat/'
 
 class DATParser:
 	def __init__(self):

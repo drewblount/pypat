@@ -8,8 +8,8 @@ import Patent
 
 # fr = '/Users/Shared/patent_raw_data/ipgb-2005-present/'
 # DB: The following line is the source directory for the xml files to be parsed.
-fr = '/Users/drewblunt/Desktop/tests/'
-
+# fr = '/Users/drewblunt/Desktop/tests/'
+fr = '/Volumes/7200/patent_raw_data/ipgb-2005-present/'
 class XMLParser:
 	def __init__(self):
 		# self.patns will be an array of dicts

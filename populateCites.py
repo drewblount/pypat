@@ -8,18 +8,15 @@ client = MongoClient(host='127.0.0.1', port=27017)
 dbname = 'patents'
 patents = client[dbname]['patns']
 
-logging.info("Started reverse at %s", time.strftime("%X %x"))
-	tStart = time.time()
+# Below doesn't work, not sure why, but I just made the index in the mongo shell
+# TODO: ensure that the following ensure ensures the index
+# patents.ensureIndex({'pno': 1})
 
 # Load only the pno and rawcites from each patent
 for citingPatn in patents.find({}, {'rawcites':1, 'pno':1}):
 	citingNo = citingPatn['pno']
 	# makes sure the patents can be quickly addressed by pnum
-	patents.ensureIndex({'pno': 1})
 	for citedPNo in citingPatn['rawcites'] :
-		newCites, newCitedBy = inDB['cites']+[citingNo], inDB['citedby']+[citingNo]
-			patents.update({ 'pno' : citedPNo},
-				       # adds citingNo to the array citedby
-				       {'$push' : {'citedby': citingNo}},
-				       # stops looking for patents to update once citedPNo is found
-				       {'multi':false})
+		patents.update({ 'pno' : citedPNo},
+					   # adds citingNo to the array citedby
+					   {'$push' : {'citedby': citingNo} } )

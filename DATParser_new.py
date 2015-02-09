@@ -9,7 +9,7 @@ import Patent
 # fr = '/Users/Shared/patent_raw_data/dat/'
 # DB: The following line is the source directory for the dat files to be parsed.
 # fr = '/Users/drewblunt/Desktop/tests/'
-fr = '/Volumes/7200/patent_raw_data/dat/'
+fr = '/Volumes/7200/patent_raw_data/dat_retry/'
 
 
 ## should help with a rare few weird unicode errors
@@ -25,7 +25,7 @@ class DATParser:
 		# self.patns = dict()
 		self.patns = []
 		self.badPatns = {}
-		# I've left badPatns alone for now; ultimately, we'll want to keep a list 
+		# I've left badPatns alone for now; ultimately, we'll want to keep a list
 		# of bad patents in its own database, so badPatns should also be an array
 		# of dicts, not a dict of Patents.
 		
@@ -81,7 +81,7 @@ class DATParser:
 						self.parseUREF(fPatn.next(), fPatn)
 					elif re.match(self.reABS, line):
 						self.parseABS(fPatn.next(), fPatn)
-
+				
 				elif self.state == 'APD':
 					# need to store the match because APD is on the same line, not next
 					match = re.match(self.reAPD, line)
@@ -95,19 +95,19 @@ class DATParser:
 		# catch that last damn patent
 		# if self.patn.pno not in self.badPatns:
 		#	   self.patns[self.patn.pno] = self.patn
-
+		
 		''' DB: I don't think the next two steps are necessary now that patns
 			is an array, and that each patent is added during its looping of the
 			above 'for'
-		if self.patn['pno'] not in self.badPatns:
+			if self.patn['pno'] not in self.badPatns:
 			self.patns.append(self.patn)
-
-		if -1 in self.patns:
+			
+			if -1 in self.patns:
 			del(self.patns[-1])
 			'''
 		return (self.patns, self.badPatns)
-			
-		
+	
+	
 	def parsePATN(self, line, fPatn):
 		if self.state != 'WKU':
 			line = fPatn.next()
@@ -125,8 +125,8 @@ class DATParser:
 					'pno' : pno
 				}
 				self.patns.append(self.patn)
-			# Below: self.patn is initialized with
-			# the appropriate pno
+				# Below: self.patn is initialized with
+				# the appropriate pno
 				self.state = 'APD'
 		elif re.match(self.reNonUtil, line):
 			self.state = 'PATN' # it's some other type, just keep going
@@ -136,7 +136,7 @@ class DATParser:
 			# self.badPatns[self.patn.pno] = self.patn
 			self.badPatns[self.patn['pno']] = self.patn
 			self.state='PATN'
-			
+	
 	def parseUREF(self, line, fPatn):
 		match = re.match(self.rePNO, line)
 		if match:
@@ -153,8 +153,8 @@ class DATParser:
 			# just one less rawcite, no big deal even if it's findable
 			# be sure that next line isn't a PATN or something though
 			logging.warning("UREF w/o PNO in %d in %s (%s)",\
-			 	self.patn['pno'], self.fn, line.rstrip())
-		
+							self.patn['pno'], self.fn, line.rstrip())
+	
 	def parseABS(self, line, fPatn):
 		match = re.match(self.rePAL, line)
 		if match:
@@ -173,7 +173,7 @@ class DATParser:
 					self.patn['abstract'] = make_unicode(abs)
 		else:
 			logging.warning("%s: Weird abstract near %d in %s", self.state, self.patn['pno'], self.fn)
-
+	
 	def parseAPD(self, match, fPatn):
 		if re.search(r'[12][0-9]{5}00', match.group(1)):	# occurs not infrequently
 			# I trust that this will never go wrong
@@ -204,7 +204,7 @@ class DATParser:
 			# happens to 5001050 in 1991.dat (only)
 			logging.warning("APD w/o TTL in %d in %s", self.patn['pno'], self.fn)
 			self.badPatns[self.patn['pno']] = self.patn
-			
+		
 		match = re.match(self.reMoreTTL, line)
 		while match:
 			self.patn['title'] += str(match.group(1).rstrip())
@@ -215,7 +215,7 @@ class DATParser:
 				self.badPatns[self.patn['pno']] = self.patn
 				break
 			match = re.match(self.reMoreTTL, line)
-			
+		
 		match = re.match(self.reISD, line)
 		if match:
 			try:
@@ -232,7 +232,7 @@ class DATParser:
 			logging.warning("TTL w/o ISD in %d in %s", self.patn['pno'], self.fn)
 			self.badPatns[self.patn['pno']] = self.patn
 		self.state = 'ASSG/CLAS'
-		
+	
 	def parseASSG(self, line, fPatn):
 		match = re.match(self.reNAM, line)
 		if match:
@@ -243,7 +243,7 @@ class DATParser:
 			if re.match(self.reCLAS, line):
 				# looks like we ate the CLAS line
 				self.parseCLAS(line, fPatn)
-				
+	
 	def parseCLAS(self, line, fPatn):
 		match = re.match(self.reOCL, line)
 		if match:
@@ -270,10 +270,10 @@ class DATParser:
 		if match:
 			self.patn['ipc'] = str(match.group(1).rstrip())
 			self.state = 'UREF/PATN'
-		# TODO doesn't get all IPCs
-		# below version does, but eats next line
-		# if next line's UREF, you lose a UREF
-		#while match:
-		#	self.patn.ipc += match.group(1).rstrip()
-		#	line = fPatn.next()
-		#	match = re.match(self.reICL, line)
+# TODO doesn't get all IPCs
+# below version does, but eats next line
+# if next line's UREF, you lose a UREF
+#while match:
+#	self.patn.ipc += match.group(1).rstrip()
+#	line = fPatn.next()
+#	match = re.match(self.reICL, line)
